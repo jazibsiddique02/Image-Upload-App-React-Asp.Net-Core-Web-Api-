@@ -1,0 +1,15 @@
+# Ignore Visual Studio files
+.vs/
+*.user
+*.suo
+
+# Ignore build and temp folders
+bin/
+obj/
+
+# Ignore Node/Vite related stuff (if in the same repo)
+node_modules/
+dist/
+
+# Ignore environment files
+.env

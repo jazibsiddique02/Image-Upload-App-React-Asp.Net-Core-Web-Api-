@@ -2,155 +2,131 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EmployeeRegisterAPI.Models;
 
 namespace EmployeeRegisterAPI.Controllers
 {
-    public class EmployeeController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class EmployeeController : ControllerBase
     {
         private readonly EmployeeDbContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public EmployeeController(EmployeeDbContext context)
+        public EmployeeController(EmployeeDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            this._webHostEnvironment = webHostEnvironment;
         }
 
-        // GET: Employee
-        public async Task<IActionResult> Index()
+        // GET: api/Employee
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<EmployeeModel>>> GetEmployees()
         {
-            return View(await _context.Employees.ToListAsync());
-        }
-
-        // GET: Employee/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
+            return await _context.Employees.Select(x=>new EmployeeModel()
             {
-                return NotFound();
-            }
+                EmployeeId = x.EmployeeId,
+                EmployeeName = x.EmployeeName,
+                Occupation = x.Occupation,
+                ImageName = x.ImageName,
+                ImageSrc = $"{Request.Scheme}://{Request.Host}/Images/{x.ImageName}"
+            }).ToListAsync();
+        } 
 
-            var employeeModel = await _context.Employees
-                .FirstOrDefaultAsync(m => m.EmployeeId == id);
-            if (employeeModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(employeeModel);
-        }
-
-        // GET: Employee/Create
-        public IActionResult Create()
+        // GET: api/Employee/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<EmployeeModel>> GetEmployeeModel(int id)
         {
-            return View();
-        }
-
-        // POST: Employee/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("EmployeeId,EmployeeName,Occupation,ImageName")] EmployeeModel employeeModel)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(employeeModel);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(employeeModel);
-        }
-
-        // GET: Employee/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var employeeModel = await _context.Employees.FindAsync(id);
+
             if (employeeModel == null)
             {
                 return NotFound();
             }
-            return View(employeeModel);
+
+            return employeeModel;
         }
 
-        // POST: Employee/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EmployeeId,EmployeeName,Occupation,ImageName")] EmployeeModel employeeModel)
+        // PUT: api/Employee/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutEmployeeModel(int id, EmployeeModel employeeModel)
         {
             if (id != employeeModel.EmployeeId)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(employeeModel).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(employeeModel);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EmployeeModelExists(employeeModel.EmployeeId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            return View(employeeModel);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!EmployeeModelExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: Employee/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // POST: api/Employee
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<EmployeeModel>> PostEmployeeModel([FromForm]EmployeeModel employeeModel)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
 
-            var employeeModel = await _context.Employees
-                .FirstOrDefaultAsync(m => m.EmployeeId == id);
+            employeeModel.ImageName = await SaveImage(employeeModel.ImageFile);
+            _context.Employees.Add(employeeModel);
+            await _context.SaveChangesAsync();
+            return StatusCode(201);
+        }
+
+        // DELETE: api/Employee/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEmployeeModel(int id)
+        {
+            var employeeModel = await _context.Employees.FindAsync(id);
             if (employeeModel == null)
             {
                 return NotFound();
             }
 
-            return View(employeeModel);
-        }
-
-        // POST: Employee/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var employeeModel = await _context.Employees.FindAsync(id);
-            if (employeeModel != null)
-            {
-                _context.Employees.Remove(employeeModel);
-            }
-
+            _context.Employees.Remove(employeeModel);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool EmployeeModelExists(int id)
         {
             return _context.Employees.Any(e => e.EmployeeId == id);
+        }
+
+
+
+        [NonAction]
+        public async Task<string> SaveImage(IFormFile imageFile)
+        {
+            string imageName = new String(Path.GetFileNameWithoutExtension(imageFile.FileName).Take(10).ToArray()).Replace(' ', '-');
+            imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(imageFile.FileName);
+            var imagePath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images", imageName);
+            using (var fileStream = new FileStream(imagePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
+            return imageName;
         }
     }
 }

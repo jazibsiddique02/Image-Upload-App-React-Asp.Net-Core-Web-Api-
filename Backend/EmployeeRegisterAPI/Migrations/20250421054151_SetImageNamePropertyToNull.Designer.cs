@@ -3,6 +3,7 @@ using EmployeeRegisterAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmployeeRegisterAPI.Migrations
 {
     [DbContext(typeof(EmployeeDbContext))]
-    partial class EmployeeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250421054151_SetImageNamePropertyToNull")]
+    partial class SetImageNamePropertyToNull
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,6 +40,7 @@ namespace EmployeeRegisterAPI.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Occupation")
+                        .IsRequired()
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("EmployeeId");

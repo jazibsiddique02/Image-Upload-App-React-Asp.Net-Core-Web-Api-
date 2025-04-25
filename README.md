@@ -12,7 +12,7 @@ A full-stack web application for employee registration using image upload. Built
 - 🧑‍💼 Register new employees with name, occupation & photo
 - 📝 Update and delete employee records
 - 📋 List all registered employees
-- 💾 Image files stored locally in `Images/` folder
+- 💾 Image files stored locally in `Images/` folder in the backend
 - 🗃️ Form data stored in SQL Server
 
 ---

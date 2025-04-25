@@ -26,7 +26,7 @@ namespace EmployeeRegisterAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EmployeeModel>>> GetEmployees()
         {
-            return await _context.Employees.Select(x=>new EmployeeModel()
+            return await _context.Employees.Select(x => new EmployeeModel()
             {
                 EmployeeId = x.EmployeeId,
                 EmployeeName = x.EmployeeName,
@@ -34,7 +34,7 @@ namespace EmployeeRegisterAPI.Controllers
                 ImageName = x.ImageName,
                 ImageSrc = $"{Request.Scheme}://{Request.Host}/Images/{x.ImageName}"
             }).ToListAsync();
-        } 
+        }
 
         // GET: api/Employee/5
         [HttpGet("{id}")]
@@ -53,11 +53,17 @@ namespace EmployeeRegisterAPI.Controllers
         // PUT: api/Employee/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployeeModel(int id, EmployeeModel employeeModel)
+        public async Task<IActionResult> PutEmployeeModel(int id, [FromForm] EmployeeModel employeeModel)
         {
             if (id != employeeModel.EmployeeId)
             {
                 return BadRequest();
+            }
+
+            if (employeeModel.ImageFile != null)
+            {
+                DeleteImage(employeeModel.ImageName);
+                employeeModel.ImageName = await SaveImage(employeeModel.ImageFile);
             }
 
             _context.Entry(employeeModel).State = EntityState.Modified;
@@ -84,7 +90,7 @@ namespace EmployeeRegisterAPI.Controllers
         // POST: api/Employee
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<EmployeeModel>> PostEmployeeModel([FromForm]EmployeeModel employeeModel)
+        public async Task<ActionResult<EmployeeModel>> PostEmployeeModel([FromForm] EmployeeModel employeeModel)
         {
 
             employeeModel.ImageName = await SaveImage(employeeModel.ImageFile);
@@ -103,6 +109,7 @@ namespace EmployeeRegisterAPI.Controllers
                 return NotFound();
             }
 
+            DeleteImage(employeeModel.ImageName);
             _context.Employees.Remove(employeeModel);
             await _context.SaveChangesAsync();
 
@@ -127,6 +134,17 @@ namespace EmployeeRegisterAPI.Controllers
                 await imageFile.CopyToAsync(fileStream);
             }
             return imageName;
+        }
+
+        [NonAction]
+        public void DeleteImage(string imageName)
+        {
+            var imagePath = Path.Combine(_webHostEnvironment.ContentRootPath, "Images", imageName);
+            if(System.IO.File.Exists(imagePath))
+            {
+                System.IO.File.Delete(imagePath);
+            }
+
         }
     }
 }

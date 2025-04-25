@@ -12,9 +12,15 @@ const initialFieldValues = {
 };
 
 export default function Employee(props) {
-  const { addOrEdit } = props;
+  const { addOrEdit, recordForEdit } = props;
   const [values, setValues] = useState(initialFieldValues);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (recordForEdit != null) {
+      setValues(recordForEdit);
+    }
+  }, [recordForEdit]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target; // name contains input field title : for eg.: employeeName,occupation,imageName,etc., value contains whatever is entered into the field: for eg.: John,developer,etc.

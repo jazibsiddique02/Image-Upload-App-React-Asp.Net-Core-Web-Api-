@@ -5,11 +5,13 @@ import axios from "axios";
 const EmployeeList = () => {
   const [employeeList, setEmployeeList] = useState([]);
 
+  const [recordForEdit, setRecordForEdit] = useState(null);
+
   useEffect(() => {
     refreshEmployeeList();
   }, []);
 
-  const employeeAPI = (url = "https://localhost:7165/api/Employee") => {
+  const employeeAPI = (url = "https://localhost:7165/api/Employee/") => {
     return {
       fetchAll: () => axios.get(url),
       create: (newRecord) => axios.post(url, newRecord),
@@ -20,15 +22,27 @@ const EmployeeList = () => {
 
   // adding an employee
   const addOrEdit = (formData, onSuccess) => {
-    employeeAPI()
-      .create(formData)
-      .then((res) => {
-        onSuccess();
-        refreshEmployeeList(); // after storing data of new employee, employeeList is updated with this function
-      })
-      .catch((err) => {
-        console.log("Error");
-      });
+    if (formData.get("employeeId") == "0") {
+      employeeAPI()
+        .create(formData)
+        .then((res) => {
+          onSuccess();
+          refreshEmployeeList(); // after storing data of new employee, employeeList is updated with this function
+        })
+        .catch((err) => {
+          console.log("Error");
+        });
+    } else {
+      employeeAPI()
+        .update(formData.get("employeeId"), formData)
+        .then((res) => {
+          onSuccess();
+          refreshEmployeeList(); // after storing data of new employee, employeeList is updated with this function
+        })
+        .catch((err) => {
+          console.log("Error");
+        });
+    }
   };
 
   // retrieves all employees from db and stores them in employeeList array
@@ -41,14 +55,35 @@ const EmployeeList = () => {
       .catch((err) => console.log(err));
   };
 
+  const showRecordDetails = (data) => {
+    setRecordForEdit(data);
+  };
+
+  const onDelete = (e, id) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this record?")) {
+      employeeAPI()
+        .delete(id)
+        .then((res) => refreshEmployeeList())
+        .catch((err) => console.log(err));
+    }
+  };
+
   const imageCard = (data) => {
     return (
-      <div className="card">
+      <div className="card" onClick={() => showRecordDetails(data)}>
         <img src={data.imageSrc} className="card-img-top rounded-circle" />
 
         <div className="card-body">
           <h5>{data.employeeName}</h5>
           <span>{data.occupation}</span>
+          <br />
+          <button
+            className="btn btn-light delete-button"
+            onClick={(e) => onDelete(e, parseInt(data.employeeId))} // when this button is clicked,bothed onDelete and showRecordDetails will be clicked. To prevent showRecordDetails from invoking, we are passing "e" as parameter to onDelete.
+          >
+            <i className="far fa-trash-alt"></i>
+          </button>
         </div>
       </div>
     );
@@ -68,7 +103,7 @@ const EmployeeList = () => {
       </div>
 
       <div className="col-md-4 my-4">
-        <Employee addOrEdit={addOrEdit} />
+        <Employee addOrEdit={addOrEdit} recordForEdit={recordForEdit} />
       </div>
 
       <div className="col-md-8 my-4">

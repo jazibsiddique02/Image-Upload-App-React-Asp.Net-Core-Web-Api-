@@ -19,7 +19,7 @@ namespace EmployeeRegisterAPI.Models
         public string? ImageName { get; set; }
 
         [NotMapped]
-        public IFormFile ImageFile { get; set; } // marked it not mapped because image file cant be stored in sql server.only path is stored
+        public IFormFile? ImageFile { get; set; } // marked it not mapped because image file cant be stored in sql server.only path is stored
    
         [NotMapped]
         public string? ImageSrc { get; set; } // this is used to for complete url of the image (e.g.: https://localhost:7165/Images/WhatsApp-I254353624.jpg)
